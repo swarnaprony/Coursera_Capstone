@@ -43,6 +43,14 @@ app.layout = html.Div(children=[html.H1('SpaceX Launch Records Dashboard',
                                 html.P("Payload range (Kg):"),
                                 # TASK 3: Add a slider to select payload range
                                 # dcc.RangeSlider(id='payload-slider',...)
+                                dcc.RangeSlider(
+                                    id='payload-slider',
+                                    min=0,
+                                    max=10000,
+                                    step=1000,
+                                    marks={3500: '3500Kg', 5000: '5000Kg', 8000: '8000Kg'},
+                                    value=[min_payload, max_payload]
+                                ),
 
                                 # TASK 4: Add a scatter chart to show the correlation between payload and launch success
                                 html.Div(dcc.Graph(id='success-payload-scatter-chart')),
@@ -63,7 +71,6 @@ def get_pie_chart(entered_site):
     else:
         filtered_df = filtered_df[(filtered_df['Launch Site'] == entered_site)]
         filtered_df['Count'] = 1
-        print(filtered_df['class'])
         fig = px.pie(data_frame=filtered_df,
                      values='Count',
                      names='class',
@@ -73,6 +80,23 @@ def get_pie_chart(entered_site):
 
 # TASK 4:
 # Add a callback function for `site-dropdown` and `payload-slider` as inputs, `success-payload-scatter-chart` as output
+@app.callback(
+    Output(component_id='success-payload-scatter-chart', component_property='figure'),
+    [
+        Input(component_id='site-dropdown', component_property='value'),
+        Input(component_id='payload-slider', component_property='value')
+    ]
+)
+def render_success_payload_scatter_chart(site_dropdown, payload_slider):
+    print(payload_slider[0])
+    filtered_df = spacex_df[(spacex_df['Payload Mass (kg)'] <= payload_slider[1])
+                            & (spacex_df['Payload Mass (kg)'] >= payload_slider[0])]
+    if site_dropdown == 'ALL':
+        fig = px.scatter(data_frame=spacex_df, x='Payload Mass (kg)', y='class', color='Booster Version Category')
+    else:
+        filtered_df = filtered_df[(filtered_df['Launch Site'] == site_dropdown)]
+        fig = px.scatter(data_frame=filtered_df, x='Payload Mass (kg)', y='class', color='Booster Version Category')
+    return fig
 
 
 # Run the app
